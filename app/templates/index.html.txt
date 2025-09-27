@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>IBS Tracker</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2rem; }
+    h1 { margin-top: 2rem; }
+    form { margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; }
+    label { display: block; margin-top: 0.5rem; }
+    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>IBS Tracker Dashboard</h1>
+
+  <!-- Meal Form -->
+  <form method="post" action="/meals/form">
+    <h2>Log a Meal</h2>
+    <label>Foods:</label>
+    <input type="text" name="foods" required>
+    <label>Notes:</label>
+    <textarea name="notes"></textarea>
+    <button type="submit">Save Meal</button>
+  </form>
+
+  <!-- Drink Form -->
+  <form method="post" action="/drinks/form">
+    <h2>Log a Drink</h2>
+    <label>Type:</label>
+    <input type="text" name="type" required>
+    <label>Volume (ml):</label>
+    <input type="number" name="volume_ml" required>
+    <label>Caffeine (0/1):</label>
+    <input type="number" name="caffeine" value="0">
+    <label>Alcohol (0/1):</label>
+    <input type="number" name="alcohol" value="0">
+    <button type="submit">Save Drink</button>
+  </form>
+
+  <!-- Bowel Movement Form -->
+  <form method="post" action="/bowel-movements/form">
+    <h2>Log a Bowel Movement</h2>
+    <label>Bristol Scale (1–7):</label>
+    <input type="number" name="bristol_scale" min="1" max="7" required>
+    <label>Urgency (0–10):</label>
+    <input type="number" name="urgency" min="0" max="10">
+    <label>Pain (0–10):</label>
+    <input type="number" name="pain" min="0" max="10">
+    <label>Notes:</label>
+    <textarea name="notes"></textarea>
+    <button type="submit">Save Bowel Movement</button>
+  </form>
+
+  <!-- Feelings Form -->
+  <form method="post" action="/feelings/form">
+    <h2>Log Feelings</h2>
+    <label>Stress (0–10):</label>
+    <input type="number" name="stress" min="0" max="10">
+    <label>Anxiety (0–10):</label>
+    <input type="number" name="anxiety" min="0" max="10">
+    <label>Sleep Quality (0–10):</label>
+    <input type="number" name="sleep_quality" min="0" max="10">
+    <label>Notes:</label>
+    <textarea name="notes"></textarea>
+    <button type="submit">Save Feelings</button>
+  </form>
+</body>
+</html>

@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from . import models, database
 from .routes import router
@@ -7,7 +9,7 @@ from .routes import router
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="IBS Tracker")
-
+templates = Jinja2Templates(directory="app/templates")
 app.include_router(router)
 
 # Dependency to get DB session
