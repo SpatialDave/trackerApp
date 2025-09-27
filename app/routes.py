@@ -135,20 +135,3 @@ def export_csv(db: Session = Depends(get_db), current_user: models.User = Depend
     output.seek(0)
     return StreamingResponse(output, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=tracker_data.csv"})
 
-# ---------------- ADMIN (temporary bootstrap) ----------------
-
-@router.post("/admin/create-users")
-def admin_create_users(
-    dave_password: str = Form(...),
-    emily_password: str = Form(...),
-    db: Session = Depends(get_db)
-):
-    hashed_dave = get_password_hash(dave_password)
-    hashed_emily = get_password_hash(emily_password)
-
-    user1 = models.User(username="Dave", hashed_password=hashed_dave)
-    user2 = models.User(username="Emily", hashed_password=hashed_emily)
-
-    db.add_all([user1, user2])
-    db.commit()
-    return {"status": "created", "users": ["Dave", "Emily"]}
