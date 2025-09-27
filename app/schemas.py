@@ -2,7 +2,19 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
-# ---------- Meals ----------
+# -------- Users --------
+class UserBase(BaseModel):
+    username: str
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+    class Config:
+        orm_mode = True
+
+# -------- Meals --------
 class MealBase(BaseModel):
     foods: str
     notes: Optional[str] = None
@@ -13,10 +25,11 @@ class MealCreate(MealBase):
 class Meal(MealBase):
     id: int
     timestamp: datetime
+    owner_id: Optional[int]
     class Config:
         orm_mode = True
 
-# ---------- Drinks ----------
+# -------- Drinks --------
 class DrinkBase(BaseModel):
     type: str
     volume_ml: float
@@ -29,10 +42,11 @@ class DrinkCreate(DrinkBase):
 class Drink(DrinkBase):
     id: int
     timestamp: datetime
+    owner_id: Optional[int]
     class Config:
         orm_mode = True
 
-# ---------- Bowel Movements ----------
+# -------- Bowel Movements --------
 class BowelMovementBase(BaseModel):
     bristol_scale: int
     urgency: Optional[int] = None
@@ -45,10 +59,11 @@ class BowelMovementCreate(BowelMovementBase):
 class BowelMovement(BowelMovementBase):
     id: int
     timestamp: datetime
+    owner_id: Optional[int]
     class Config:
         orm_mode = True
 
-# ---------- Feelings ----------
+# -------- Feelings --------
 class FeelingBase(BaseModel):
     stress: Optional[int] = None
     anxiety: Optional[int] = None
@@ -61,5 +76,14 @@ class FeelingCreate(FeelingBase):
 class Feeling(FeelingBase):
     id: int
     timestamp: datetime
+    owner_id: Optional[int]
     class Config:
         orm_mode = True
+
+# -------- Auth --------
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
