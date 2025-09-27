@@ -7,7 +7,19 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Segoe UI', sans-serif; margin: 1rem; background: #f9fafb; }
-    h1 { text-align: center; margin-bottom: 1rem; }
+    h1 { text-align: center; margin-bottom: 0.5rem; }
+    .back-btn {
+      display: block;
+      margin: 0 auto 1rem auto;
+      padding: 0.6rem 1.2rem;
+      background: #2196F3;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-align: center;
+    }
     .chart-container {
       width: 100%;
       max-width: 700px;
@@ -33,6 +45,9 @@
 </head>
 <body>
   <h1>IBS Tracker Dashboard</h1>
+
+  <!-- Back button -->
+  <button class="back-btn" onclick="window.location.href='/form'">← Back to Forms</button>
 
   <button class="export-btn" onclick="window.location.href='/export/csv'">Export Data to CSV</button>
 
@@ -116,7 +131,7 @@
         }
       });
 
-      // Drinks (Caffeine & Alcohol)
+      // Drinks
       const drinks = await fetchData("/drinks/");
       const drinkLabels = drinks.map(d => new Date(d.timestamp).toLocaleDateString());
       const caffeineData = drinks.map(d => d.caffeine || 0);
