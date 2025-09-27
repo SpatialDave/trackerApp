@@ -1,0 +1,4 @@
+trackerApp/
+__pycache__/
+*.pyc
+.env
