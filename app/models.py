@@ -20,7 +20,7 @@ class Meal(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     foods = Column(Text)
     notes = Column(Text)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="meals")
 
 class Drink(Base):
@@ -31,7 +31,7 @@ class Drink(Base):
     volume_ml = Column(Float)
     caffeine = Column(Integer, default=0)
     alcohol = Column(Integer, default=0)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="drinks")
 
 class BowelMovement(Base):
@@ -42,7 +42,7 @@ class BowelMovement(Base):
     urgency = Column(Integer)
     pain = Column(Integer)
     notes = Column(Text)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="bowel_movements")
 
 class Feeling(Base):
@@ -53,5 +53,5 @@ class Feeling(Base):
     anxiety = Column(Integer)
     sleep_quality = Column(Integer)
     notes = Column(Text)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
     owner = relationship("User", back_populates="feelings")
