@@ -5,7 +5,6 @@
   <title>IBS Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Simple modern styling -->
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
@@ -48,12 +47,19 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 0.5rem; }
-    input, textarea {
+    input, textarea, select {
       width: 100%;
       padding: 0.5rem;
       margin-top: 0.2rem;
       border: 1px solid #ccc;
       border-radius: 4px;
+    }
+    input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.5rem;
+    }
+    input[type="range"] {
+      width: 100%;
     }
     button[type="submit"] {
       margin-top: 1rem;
@@ -107,13 +113,28 @@
     <form method="post" action="/drinks/form" onsubmit="showMessage()">
       <h2>Drink</h2>
       <label>Type:</label>
-      <input type="text" name="type" required>
+      <select name="type" id="drinkType" onchange="toggleDrinkOptions()" required>
+        <option value="Water" selected>Water</option>
+        <option value="Coffee">Coffee</option>
+        <option value="Tea">Tea</option>
+        <option value="Cider">Cider</option>
+        <option value="Guiness">Guiness</option>
+        <option value="Cocktail">Cocktail</option>
+      </select>
+
       <label>Volume (ml):</label>
       <input type="number" name="volume_ml" required>
-      <label>Caffeine (0/1):</label>
-      <input type="number" name="caffeine" value="0">
-      <label>Alcohol (0/1):</label>
-      <input type="number" name="alcohol" value="0">
+
+      <!-- Decaf checkbox -->
+      <div id="decafOption" style="display:none;">
+        <label><input type="checkbox" name="decaf" value="1"> Decaf</label>
+      </div>
+
+      <!-- Alcohol checkbox -->
+      <div id="alcoholOption" style="display:none;">
+        <label><input type="checkbox" name="alcohol" value="1"> Contains Alcohol</label>
+      </div>
+
       <button type="submit">Save Drink</button>
     </form>
   </div>
@@ -123,11 +144,17 @@
     <form method="post" action="/bowel-movements/form" onsubmit="showMessage()">
       <h2>Bowel Movement</h2>
       <label>Bristol Scale (1–7):</label>
-      <input type="number" name="bristol_scale" min="1" max="7" required>
+      <input type="range" name="bristol_scale" min="1" max="7" value="4" oninput="this.nextElementSibling.value = this.value">
+      <output>4</output>
+
       <label>Urgency (0–10):</label>
-      <input type="number" name="urgency" min="0" max="10">
-      <label>Pain (0–10):</label>
-      <input type="number" name="pain" min="0" max="10">
+      <input type="range" name="urgency" min="0" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+      <output>5</output>
+
+      <label>Discomfort (0–10):</label>
+      <input type="range" name="pain" min="0" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+      <output>5</output>
+
       <label>Notes:</label>
       <textarea name="notes"></textarea>
       <button type="submit">Save Bowel Movement</button>
@@ -139,18 +166,24 @@
     <form method="post" action="/feelings/form" onsubmit="showMessage()">
       <h2>Feelings</h2>
       <label>Stress (0–10):</label>
-      <input type="number" name="stress" min="0" max="10">
+      <input type="range" name="stress" min="0" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+      <output>5</output>
+
       <label>Anxiety (0–10):</label>
-      <input type="number" name="anxiety" min="0" max="10">
+      <input type="range" name="anxiety" min="0" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+      <output>5</output>
+
       <label>Sleep Quality (0–10):</label>
-      <input type="number" name="sleep_quality" min="0" max="10">
+      <input type="range" name="sleep_quality" min="0" max="10" value="5" oninput="this.nextElementSibling.value = this.value">
+      <output>5</output>
+
       <label>Notes:</label>
       <textarea name="notes"></textarea>
       <button type="submit">Save Feelings</button>
     </form>
   </div>
 
-  <!-- JS for toggling forms and showing message -->
+  <!-- JS -->
   <script>
     function toggleForm(id) {
       document.querySelectorAll('.form-container').forEach(f => f.style.display = 'none');
@@ -161,6 +194,12 @@
       const msg = document.getElementById('message');
       msg.style.display = 'block';
       setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    }
+
+    function toggleDrinkOptions() {
+      const type = document.getElementById('drinkType').value;
+      document.getElementById('decafOption').style.display = (type === "Coffee" || type === "Tea") ? 'block' : 'none';
+      document.getElementById('alcoholOption').style.display = (["Cider","Guiness","Cocktail"].includes(type)) ? 'block' : 'none';
     }
   </script>
 </body>
