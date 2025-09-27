@@ -1,155 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>IBS Tracker Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: 'Segoe UI', sans-serif; margin: 1rem; background: #f9fafb; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 1rem; background: #f9fafb; color: #333; }
     h1 { text-align: center; margin-bottom: 0.5rem; }
     .back-btn {
-      display: block;
-      margin: 0 auto 1rem auto;
-      padding: 0.6rem 1.2rem;
-      background: #2196F3;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
-      text-align: center;
+      display: block; margin: 0.5rem auto 1rem auto; padding: 0.6rem 1.2rem;
+      background: #2196F3; color: #fff; border: none; border-radius: 6px; cursor: pointer;
     }
-    .chart-container {
-      width: 100%;
-      max-width: 700px;
-      margin: 1rem auto;
-      background: #fff;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    .controls {
+      max-width: 900px; margin: 0 auto 1rem auto; background: #fff; padding: 1rem;
+      border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem;
     }
-    canvas { width: 100% !important; height: auto !important; }
+    label { font-size: 0.9rem; color: #555; }
+    select, input[type="date"] {
+      width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px; background: #fff;
+    }
+    .actions { text-align: center; margin-top: 0.5rem; }
+    .primary-btn {
+      padding: 0.6rem 1rem; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;
+    }
     .export-btn {
-      display: block;
-      margin: 1rem auto;
-      padding: 0.7rem 1.2rem;
-      background: #4CAF50;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 1rem;
+      padding: 0.6rem 1rem; background: #4CAF50; color: #fff; border: none; border-radius: 6px; cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    .chart-card {
+      max-width: 1000px; margin: 0 auto; background: #fff; padding: 1rem; border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
   <h1>IBS Tracker Dashboard</h1>
-
-  <!-- Back button -->
   <button class="back-btn" onclick="window.location.href='/form'">← Back to Forms</button>
 
-  <button class="export-btn" onclick="window.location.href='/export/csv'">Export Data to CSV</button>
+  <div class="controls">
+    <div>
+      <label>Dataset</label>
+      <select id="dataset">
+        <option value="bowel">Bowel Movements</option>
+        <option value="feelings">Feelings</option>
+        <option value="drinks">Drinks</option>
+        <option value="meals">Meals</option>
+      </select>
+    </div>
 
-  <div class="chart-container">
-    <h2>Bristol Scale Over Time</h2>
-    <canvas id="bmChart"></canvas>
+    <div>
+      <label>Metric</label>
+      <select id="metric"></select>
+    </div>
+
+    <div>
+      <label>Start date</label>
+      <input type="date" id="startDate" />
+    </div>
+
+    <div>
+      <label>End date</label>
+      <input type="date" id="endDate" />
+    </div>
+
+    <div>
+      <label>Hour interval</label>
+      <select id="hourInterval">
+        <option value="">None (raw data)</option>
+        <option value="1">1 hour</option>
+        <option value="2">2 hours</option>
+        <option value="3">3 hours</option>
+        <option value="6">6 hours</option>
+      </select>
+    </div>
   </div>
 
-  <div class="chart-container">
-    <h2>Stress vs. Sleep Quality</h2>
-    <canvas id="feelingChart"></canvas>
+  <div class="actions">
+    <button class="primary-btn" onclick="updateChart()">Update chart</button>
+    <button class="export-btn" onclick="window.location.href='/export/csv'">Export CSV</button>
   </div>
 
-  <div class="chart-container">
-    <h2>Meals Logged Per Day</h2>
-    <canvas id="mealChart"></canvas>
-  </div>
-
-  <div class="chart-container">
-    <h2>Drinks (Caffeine & Alcohol)</h2>
-    <canvas id="drinkChart"></canvas>
+  <div class="chart-card" style="margin-top: 1rem;">
+    <canvas id="dynamicChart"></canvas>
   </div>
 
   <script>
-    async function fetchData(endpoint) {
-      const res = await fetch(endpoint);
-      return res.json();
+    // Dataset -> metric options mapping (align with server-side DATASET_METRICS)
+    const METRICS = {
+      bowel: [
+        { value: "bristol_scale", label: "Bristol scale" },
+        { value: "urgency", label: "Urgency" },
+        { value: "pain", label: "Discomfort" }
+      ],
+      feelings: [
+        { value: "stress", label: "Stress" },
+        { value: "anxiety", label: "Anxiety" },
+        { value: "sleep_quality", label: "Sleep quality" }
+      ],
+      drinks: [
+        { value: "volume_ml", label: "Volume (ml)" },
+        { value: "caffeine", label: "Caffeine" },
+        { value: "alcohol", label: "Alcohol" }
+      ],
+      meals: [
+        { value: "count", label: "Meals per day (count)" }
+      ]
+    };
+
+    function populateMetrics() {
+      const ds = document.getElementById("dataset").value;
+      const metricSel = document.getElementById("metric");
+      metricSel.innerHTML = "";
+      METRICS[ds].forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.value;
+        opt.textContent = m.label;
+        metricSel.appendChild(opt);
+      });
     }
 
-    async function renderCharts() {
-      // Bowel Movements
-      const bms = await fetchData("/bowel-movements/");
-      const bmLabels = bms.map(b => new Date(b.timestamp).toLocaleDateString());
-      const bmData = bms.map(b => b.bristol_scale);
+    let chartRef = null;
 
-      new Chart(document.getElementById("bmChart"), {
+    async function updateChart() {
+      const ds = document.getElementById("dataset").value;
+      const metric = document.getElementById("metric").value;
+      const start = document.getElementById("startDate").value || "";
+      const end = document.getElementById("endDate").value || "";
+      const interval = document.getElementById("hourInterval").value || "";
+
+      const params = new URLSearchParams({ dataset: ds, metric });
+      if (start) params.append("start_date", start);
+      if (end) params.append("end_date", end);
+      if (interval) params.append("hour_interval", interval);
+
+      const res = await fetch(`/data?${params.toString()}`);
+      if (!res.ok) {
+        alert("Failed to load data. Please check filters.");
+        return;
+      }
+      const data = await res.json();
+
+      const labels = data.map(d => d.timestamp.length === 10
+        ? d.timestamp
+        : d.timestamp // for hour buckets, we return labels like "05:00-05:59"
+      );
+      const values = data.map(d => d.value);
+
+      if (chartRef) chartRef.destroy();
+
+      chartRef = new Chart(document.getElementById("dynamicChart"), {
         type: "line",
         data: {
-          labels: bmLabels,
+          labels,
           datasets: [{
-            label: "Bristol Scale",
-            data: bmData,
-            borderColor: "#FF9800",
-            backgroundColor: "rgba(255,152,0,0.2)",
+            label: `${ds} – ${metric}${interval ? ` (every ${interval}h)` : ""}`,
+            data: values,
+            borderColor: "#2196F3",
+            backgroundColor: "rgba(33,150,243,0.15)",
             fill: true,
-            tension: 0.3
+            tension: 0.3,
+            pointRadius: 2
           }]
-        }
-      });
-
-      // Feelings
-      const feelings = await fetchData("/feelings/");
-      const feelingLabels = feelings.map(f => new Date(f.timestamp).toLocaleDateString());
-      const stressData = feelings.map(f => f.stress || 0);
-      const sleepData = feelings.map(f => f.sleep_quality || 0);
-
-      new Chart(document.getElementById("feelingChart"), {
-        type: "bar",
-        data: {
-          labels: feelingLabels,
-          datasets: [
-            { label: "Stress", data: stressData, backgroundColor: "#E91E63" },
-            { label: "Sleep Quality", data: sleepData, backgroundColor: "#2196F3" }
-          ]
         },
-        options: { scales: { y: { beginAtZero: true, max: 10 } } }
-      });
-
-      // Meals per day
-      const meals = await fetchData("/meals/");
-      const mealCounts = {};
-      meals.forEach(m => {
-        const day = new Date(m.timestamp).toLocaleDateString();
-        mealCounts[day] = (mealCounts[day] || 0) + 1;
-      });
-      new Chart(document.getElementById("mealChart"), {
-        type: "bar",
-        data: {
-          labels: Object.keys(mealCounts),
-          datasets: [{ label: "Meals", data: Object.values(mealCounts), backgroundColor: "#4CAF50" }]
-        }
-      });
-
-      // Drinks
-      const drinks = await fetchData("/drinks/");
-      const drinkLabels = drinks.map(d => new Date(d.timestamp).toLocaleDateString());
-      const caffeineData = drinks.map(d => d.caffeine || 0);
-      const alcoholData = drinks.map(d => d.alcohol || 0);
-
-      new Chart(document.getElementById("drinkChart"), {
-        type: "line",
-        data: {
-          labels: drinkLabels,
-          datasets: [
-            { label: "Caffeine", data: caffeineData, borderColor: "#2196F3", fill: false },
-            { label: "Alcohol", data: alcoholData, borderColor: "#9C27B0", fill: false }
-          ]
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } },
+          plugins: { legend: { display: true } }
         }
       });
     }
 
-    renderCharts();
+    document.getElementById("dataset").addEventListener("change", () => {
+      populateMetrics();
+      updateChart();
+    });
+
+    populateMetrics();
+    updateChart();
   </script>
 </body>
 </html>
