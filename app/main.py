@@ -1,11 +1,14 @@
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from . import models, database
+from .routes import router
 
 # Create tables if they don't exist
 models.Base.metadata.create_all(bind=database.engine)
 
 app = FastAPI(title="IBS Tracker")
+
+app.include_router(router)
 
 # Dependency to get DB session
 def get_db():
