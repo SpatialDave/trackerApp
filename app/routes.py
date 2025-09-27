@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, Request, Form, status
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
+import io, csv
+
 from . import crud, schemas, database
 
 router = APIRouter()
@@ -64,7 +66,7 @@ def form_page(request: Request):
 @router.post("/meals/form")
 def create_meal_form(
     foods: str = Form(...),
-    notes: str = Form(None),
+    notes: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     crud.create_meal(db, schemas.MealCreate(foods=foods, notes=notes))
@@ -75,12 +77,15 @@ def create_meal_form(
 def create_drink_form(
     type: str = Form(...),
     volume_ml: float = Form(...),
-    caffeine: int = Form(0),
-    alcohol: int = Form(0),
+    caffeine: Optional[int] = Form(0),
+    alcohol: Optional[int] = Form(0),
     db: Session = Depends(get_db)
 ):
     crud.create_drink(db, schemas.DrinkCreate(
-        type=type, volume_ml=volume_ml, caffeine=caffeine, alcohol=alcohol
+        type=type,
+        volume_ml=volume_ml,
+        caffeine=int(caffeine) if caffeine is not None else 0,
+        alcohol=int(alcohol) if alcohol is not None else 0
     ))
     return RedirectResponse("/form", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -88,9 +93,9 @@ def create_drink_form(
 @router.post("/bowel-movements/form")
 def create_bm_form(
     bristol_scale: int = Form(...),
-    urgency: int = Form(None),
-    pain: int = Form(None),
-    notes: str = Form(None),
+    urgency: Optional[int] = Form(None),
+    pain: Optional[int] = Form(None),
+    notes: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     crud.create_bm(db, schemas.BowelMovementCreate(
@@ -101,13 +106,52 @@ def create_bm_form(
 # Feelings form handler
 @router.post("/feelings/form")
 def create_feeling_form(
-    stress: int = Form(None),
-    anxiety: int = Form(None),
-    sleep_quality: int = Form(None),
-    notes: str = Form(None),
+    stress: Optional[int] = Form(None),
+    anxiety: Optional[int] = Form(None),
+    sleep_quality: Optional[int] = Form(None),
+    notes: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     crud.create_feeling(db, schemas.FeelingCreate(
         stress=stress, anxiety=anxiety, sleep_quality=sleep_quality, notes=notes
     ))
     return RedirectResponse("/form", status_code=status.HTTP_303_SEE_OTHER)
+
+# ---------------- DASHBOARD ----------------
+
+@router.get("/dashboard", response_class=HTMLResponse)
+def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+# ---------------- EXPORT ----------------
+
+@router.get("/export/csv")
+def export_csv(db: Session = Depends(get_db)):
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow(["type", "timestamp", "field1", "field2", "field3", "notes"])
+
+    # Meals
+    for m in crud.get_meals(db):
+        writer.writerow(["meal", m.timestamp, m.foods, "", "", m.notes or ""])
+
+    # Drinks
+    for d in crud.get_drinks(db):
+        writer.writerow(["drink", d.timestamp, d.type, d.volume_ml, f"C:{d.caffeine}/A:{d.alcohol}", ""])
+
+    # Bowel Movements
+    for b in crud.get_bms(db):
+        writer.writerow(["bowel", b.timestamp, b.bristol_scale, b.urgency, b.pain, b.notes or ""])
+
+    # Feelings
+    for f in crud.get_feelings(db):
+        writer.writerow(["feeling", f.timestamp, f.stress, f.anxiety, f.sleep_quality, f.notes or ""])
+
+    output.seek(0)
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=tracker_data.csv"}
+    )

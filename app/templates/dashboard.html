@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>IBS Tracker Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 1rem; background: #f9fafb; }
+    h1 { text-align: center; margin-bottom: 1rem; }
+    .chart-container {
+      width: 100%;
+      max-width: 700px;
+      margin: 1rem auto;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    canvas { width: 100% !important; height: auto !important; }
+    .export-btn {
+      display: block;
+      margin: 1rem auto;
+      padding: 0.7rem 1.2rem;
+      background: #4CAF50;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>IBS Tracker Dashboard</h1>
+
+  <button class="export-btn" onclick="window.location.href='/export/csv'">Export Data to CSV</button>
+
+  <div class="chart-container">
+    <h2>Bristol Scale Over Time</h2>
+    <canvas id="bmChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Stress vs. Sleep Quality</h2>
+    <canvas id="feelingChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Meals Logged Per Day</h2>
+    <canvas id="mealChart"></canvas>
+  </div>
+
+  <div class="chart-container">
+    <h2>Drinks (Caffeine & Alcohol)</h2>
+    <canvas id="drinkChart"></canvas>
+  </div>
+
+  <script>
+    async function fetchData(endpoint) {
+      const res = await fetch(endpoint);
+      return res.json();
+    }
+
+    async function renderCharts() {
+      // Bowel Movements
+      const bms = await fetchData("/bowel-movements/");
+      const bmLabels = bms.map(b => new Date(b.timestamp).toLocaleDateString());
+      const bmData = bms.map(b => b.bristol_scale);
+
+      new Chart(document.getElementById("bmChart"), {
+        type: "line",
+        data: {
+          labels: bmLabels,
+          datasets: [{
+            label: "Bristol Scale",
+            data: bmData,
+            borderColor: "#FF9800",
+            backgroundColor: "rgba(255,152,0,0.2)",
+            fill: true,
+            tension: 0.3
+          }]
+        }
+      });
+
+      // Feelings
+      const feelings = await fetchData("/feelings/");
+      const feelingLabels = feelings.map(f => new Date(f.timestamp).toLocaleDateString());
+      const stressData = feelings.map(f => f.stress || 0);
+      const sleepData = feelings.map(f => f.sleep_quality || 0);
+
+      new Chart(document.getElementById("feelingChart"), {
+        type: "bar",
+        data: {
+          labels: feelingLabels,
+          datasets: [
+            { label: "Stress", data: stressData, backgroundColor: "#E91E63" },
+            { label: "Sleep Quality", data: sleepData, backgroundColor: "#2196F3" }
+          ]
+        },
+        options: { scales: { y: { beginAtZero: true, max: 10 } } }
+      });
+
+      // Meals per day
+      const meals = await fetchData("/meals/");
+      const mealCounts = {};
+      meals.forEach(m => {
+        const day = new Date(m.timestamp).toLocaleDateString();
+        mealCounts[day] = (mealCounts[day] || 0) + 1;
+      });
+      new Chart(document.getElementById("mealChart"), {
+        type: "bar",
+        data: {
+          labels: Object.keys(mealCounts),
+          datasets: [{ label: "Meals", data: Object.values(mealCounts), backgroundColor: "#4CAF50" }]
+        }
+      });
+
+      // Drinks (Caffeine & Alcohol)
+      const drinks = await fetchData("/drinks/");
+      const drinkLabels = drinks.map(d => new Date(d.timestamp).toLocaleDateString());
+      const caffeineData = drinks.map(d => d.caffeine || 0);
+      const alcoholData = drinks.map(d => d.alcohol || 0);
+
+      new Chart(document.getElementById("drinkChart"), {
+        type: "line",
+        data: {
+          labels: drinkLabels,
+          datasets: [
+            { label: "Caffeine", data: caffeineData, borderColor: "#2196F3", fill: false },
+            { label: "Alcohol", data: alcoholData, borderColor: "#9C27B0", fill: false }
+          ]
+        }
+      });
+    }
+
+    renderCharts();
+  </script>
+</body>
+</html>
