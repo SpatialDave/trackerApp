@@ -1,69 +1,167 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>IBS Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Simple modern styling -->
   <style>
-    body { font-family: Arial, sans-serif; margin: 2rem; }
-    h1 { margin-top: 2rem; }
-    form { margin-bottom: 2rem; padding: 1rem; border: 1px solid #ccc; }
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      margin: 0;
+      padding: 1rem;
+      background: #f9fafb;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .button-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .btn {
+      padding: 0.7rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: #fff;
+    }
+    .meal-btn { background: #4CAF50; }
+    .drink-btn { background: #2196F3; }
+    .bm-btn { background: #FF9800; }
+    .feeling-btn { background: #9C27B0; }
+    .chart-btn { background: #607D8B; }
+
+    .form-container {
+      display: none;
+      background: #fff;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
     label { display: block; margin-top: 0.5rem; }
-    input, textarea { width: 100%; padding: 0.5rem; margin-top: 0.2rem; }
-    button { margin-top: 1rem; padding: 0.5rem 1rem; }
+    input, textarea {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.2rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button[type="submit"] {
+      margin-top: 1rem;
+      background: #333;
+      color: #fff;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .message {
+      display: none;
+      text-align: center;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border-radius: 4px;
+      background: #4CAF50;
+      color: white;
+    }
   </style>
 </head>
 <body>
-  <h1>IBS Tracker Dashboard</h1>
+  <h1>IBS Tracker</h1>
+
+  <!-- Success message -->
+  <div id="message" class="message">Entry logged successfully!</div>
+
+  <!-- Button bar -->
+  <div class="button-bar">
+    <button class="btn meal-btn" onclick="toggleForm('mealForm')">Log Meal</button>
+    <button class="btn drink-btn" onclick="toggleForm('drinkForm')">Log Drink</button>
+    <button class="btn bm-btn" onclick="toggleForm('bmForm')">Log Bowel Movement</button>
+    <button class="btn feeling-btn" onclick="toggleForm('feelingForm')">Log Feelings</button>
+    <button class="btn chart-btn" onclick="window.location.href='/dashboard'">View Charts</button>
+  </div>
 
   <!-- Meal Form -->
-  <form method="post" action="/meals/form">
-    <h2>Log a Meal</h2>
-    <label>Foods:</label>
-    <input type="text" name="foods" required>
-    <label>Notes:</label>
-    <textarea name="notes"></textarea>
-    <button type="submit">Save Meal</button>
-  </form>
+  <div id="mealForm" class="form-container">
+    <form method="post" action="/meals/form" onsubmit="showMessage()">
+      <h2>Meal</h2>
+      <label>Foods:</label>
+      <input type="text" name="foods" required>
+      <label>Notes:</label>
+      <textarea name="notes"></textarea>
+      <button type="submit">Save Meal</button>
+    </form>
+  </div>
 
   <!-- Drink Form -->
-  <form method="post" action="/drinks/form">
-    <h2>Log a Drink</h2>
-    <label>Type:</label>
-    <input type="text" name="type" required>
-    <label>Volume (ml):</label>
-    <input type="number" name="volume_ml" required>
-    <label>Caffeine (0/1):</label>
-    <input type="number" name="caffeine" value="0">
-    <label>Alcohol (0/1):</label>
-    <input type="number" name="alcohol" value="0">
-    <button type="submit">Save Drink</button>
-  </form>
+  <div id="drinkForm" class="form-container">
+    <form method="post" action="/drinks/form" onsubmit="showMessage()">
+      <h2>Drink</h2>
+      <label>Type:</label>
+      <input type="text" name="type" required>
+      <label>Volume (ml):</label>
+      <input type="number" name="volume_ml" required>
+      <label>Caffeine (0/1):</label>
+      <input type="number" name="caffeine" value="0">
+      <label>Alcohol (0/1):</label>
+      <input type="number" name="alcohol" value="0">
+      <button type="submit">Save Drink</button>
+    </form>
+  </div>
 
   <!-- Bowel Movement Form -->
-  <form method="post" action="/bowel-movements/form">
-    <h2>Log a Bowel Movement</h2>
-    <label>Bristol Scale (1–7):</label>
-    <input type="number" name="bristol_scale" min="1" max="7" required>
-    <label>Urgency (0–10):</label>
-    <input type="number" name="urgency" min="0" max="10">
-    <label>Pain (0–10):</label>
-    <input type="number" name="pain" min="0" max="10">
-    <label>Notes:</label>
-    <textarea name="notes"></textarea>
-    <button type="submit">Save Bowel Movement</button>
-  </form>
+  <div id="bmForm" class="form-container">
+    <form method="post" action="/bowel-movements/form" onsubmit="showMessage()">
+      <h2>Bowel Movement</h2>
+      <label>Bristol Scale (1–7):</label>
+      <input type="number" name="bristol_scale" min="1" max="7" required>
+      <label>Urgency (0–10):</label>
+      <input type="number" name="urgency" min="0" max="10">
+      <label>Pain (0–10):</label>
+      <input type="number" name="pain" min="0" max="10">
+      <label>Notes:</label>
+      <textarea name="notes"></textarea>
+      <button type="submit">Save Bowel Movement</button>
+    </form>
+  </div>
 
   <!-- Feelings Form -->
-  <form method="post" action="/feelings/form">
-    <h2>Log Feelings</h2>
-    <label>Stress (0–10):</label>
-    <input type="number" name="stress" min="0" max="10">
-    <label>Anxiety (0–10):</label>
-    <input type="number" name="anxiety" min="0" max="10">
-    <label>Sleep Quality (0–10):</label>
-    <input type="number" name="sleep_quality" min="0" max="10">
-    <label>Notes:</label>
-    <textarea name="notes"></textarea>
-    <button type="submit">Save Feelings</button>
-  </form>
+  <div id="feelingForm" class="form-container">
+    <form method="post" action="/feelings/form" onsubmit="showMessage()">
+      <h2>Feelings</h2>
+      <label>Stress (0–10):</label>
+      <input type="number" name="stress" min="0" max="10">
+      <label>Anxiety (0–10):</label>
+      <input type="number" name="anxiety" min="0" max="10">
+      <label>Sleep Quality (0–10):</label>
+      <input type="number" name="sleep_quality" min="0" max="10">
+      <label>Notes:</label>
+      <textarea name="notes"></textarea>
+      <button type="submit">Save Feelings</button>
+    </form>
+  </div>
+
+  <!-- JS for toggling forms and showing message -->
+  <script>
+    function toggleForm(id) {
+      document.querySelectorAll('.form-container').forEach(f => f.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function showMessage() {
+      const msg = document.getElementById('message');
+      msg.style.display = 'block';
+      setTimeout(() => { msg.style.display = 'none'; }, 2000);
+    }
+  </script>
 </body>
 </html>
